@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Minecraft 統合版 manifest.json ジェネレーター</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>manifest.json ジェネレーター</h1>
+    <p>Minecraft 統合版(Bedrock Edition)のビヘイビア / リソース / スキンパック / ワールドテンプレート用</p>
+  </header>
+
+  <main>
+    <form id="form" class="panel" autocomplete="off" onsubmit="return false">
+      <section>
+        <h2>パックの種類</h2>
+        <div class="row">
+          <label data-tip="packType">種類
+            <select id="packType">
+              <option value="behavior">ビヘイビアパック</option>
+              <option value="resource">リソースパック</option>
+              <option value="world_template">ワールドテンプレート</option>
+              <option value="skin">スキンパック</option>
+            </select>
+          </label>
+          <label data-tip="formatVersion">format_version
+            <select id="formatVersion">
+              <option value="1">1(旧形式・スキンパック)</option>
+              <option value="2" selected>2(標準)</option>
+              <option value="3">3(プレビュー / semver文字列)</option>
+            </select>
+          </label>
+        </div>
+        <p class="hint" id="formatHint"></p>
+      </section>
+
+      <section>
+        <h2>header</h2>
+        <label data-tip="name">name(必須)
+          <input type="text" id="name" value="My Pack">
+        </label>
+        <details class="mc-tools" data-for="name"></details>
+        <div class="mc-preview" data-preview-for="name" hidden></div>
+        <label data-tip="description">description
+          <textarea id="description" rows="2">My first pack</textarea>
+        </label>
+        <details class="mc-tools" data-for="description"></details>
+        <div class="mc-preview" data-preview-for="description" hidden></div>
+        <div class="row">
+          <label data-tip="version">version
+            <input type="text" id="version" value="1.0.0">
+          </label>
+          <label data-types="behavior resource" data-tip="minEngine">min_engine_version(必須)
+            <input type="text" id="minEngine" value="1.21.0">
+          </label>
+          <label data-types="world_template" data-tip="baseGame">base_game_version
+            <input type="text" id="baseGame" value="1.21.0">
+          </label>
+        </div>
+        <label data-types="resource" data-tip="packScope">pack_scope
+          <select id="packScope">
+            <option value="">指定しない(any 扱い)</option>
+            <option value="any">any</option>
+            <option value="global">global(ゲーム全体のみ)</option>
+            <option value="world">world(ワールド単位のみ)</option>
+          </select>
+        </label>
+        <div class="checks">
+          <label id="platformLockedLabel" data-tip="platformLocked"><input type="checkbox" id="platformLocked"> platform_locked</label>
+        </div>
+        <div class="checks" data-types="world_template">
+          <label data-tip="lockTemplate"><input type="checkbox" id="lockTemplate" checked> lock_template_options(必須)</label>
+          <label data-tip="randomSeed"><input type="checkbox" id="randomSeed"> allow_random_seed</label>
+        </div>
+      </section>
+
+      <section>
+        <h2 data-tip="modules">modules</h2>
+        <div class="checks" id="modules"></div>
+        <label data-tip="moduleDesc">モジュールの説明(任意)
+          <input type="text" id="moduleDesc" placeholder="Example module">
+        </label>
+        <div id="scriptOptions" hidden>
+          <label data-tip="scriptEntry">script の entry
+            <input type="text" id="scriptEntry" value="scripts/main.js">
+          </label>
+          <p class="hint">language は javascript 固定です。</p>
+        </div>
+      </section>
+
+      <section>
+        <h2 data-tip="uuids">UUID</h2>
+        <div class="uuid-row">
+          <label>header の UUID
+            <input type="text" id="headerUuid" readonly>
+          </label>
+          <button type="button" data-regen="header">再生成</button>
+        </div>
+        <div id="moduleUuids"></div>
+      </section>
+
+      <section data-types="behavior resource world_template">
+        <h2 data-tip="dependencies">dependencies</h2>
+        <div id="deps"></div>
+        <button type="button" id="addDep">+ 依存を追加</button>
+        <datalist id="moduleNames">
+          <option value="@minecraft/server">
+          <option value="@minecraft/server-ui">
+          <option value="@minecraft/server-gametest">
+          <option value="@minecraft/server-admin">
+          <option value="@minecraft/server-net">
+        </datalist>
+      </section>
+
+      <section data-types="behavior resource world_template">
+        <h2 data-tip="capabilities">capabilities</h2>
+        <div class="checks" id="capabilities">
+          <label data-tip="cap_chemistry"><input type="checkbox" value="chemistry"> chemistry</label>
+          <label data-tip="cap_editorExtension"><input type="checkbox" value="editorExtension"> editorExtension</label>
+          <label data-tip="cap_experimental_custom_ui"><input type="checkbox" value="experimental_custom_ui"> experimental_custom_ui</label>
+          <label data-tip="cap_script_eval"><input type="checkbox" value="script_eval"> script_eval</label>
+          <label data-tip="cap_raytraced"><input type="checkbox" value="raytraced"> raytraced</label>
+          <label data-tip="cap_pbr"><input type="checkbox" value="pbr"> pbr</label>
+        </div>
+      </section>
+
+      <section data-types="resource">
+        <h2 data-tip="subpacks">subpacks</h2>
+        <p class="hint">サブパックは、パックのフォルダ内の <code>subpacks/&lt;folder_name&gt;/</code> に中身(テクスチャなど)を置きます。プレイヤーがゲーム内でON/OFFできます。</p>
+        <div id="subpacks"></div>
+        <button type="button" id="addSubpack">+ サブパックを追加</button>
+        <button type="button" id="addSubpackPreset">+ low / medium / high を追加</button>
+      </section>
+
+      <section>
+        <h2 data-tip="metadata">metadata</h2>
+        <label><span id="authorsLabel" data-tip="authors">authors(カンマ区切り)</span>
+          <input type="text" id="authors" placeholder="Steve, Alex">
+        </label>
+        <div class="row">
+          <label data-tip="license">license
+            <input type="text" id="license" placeholder="MIT">
+          </label>
+          <label data-tip="url">url
+            <input type="text" id="url" placeholder="https://example.com">
+          </label>
+        </div>
+        <div class="checks">
+          <label data-types="behavior resource world_template" data-tip="productAddon"><input type="checkbox" id="productAddon"> product_type: "addon"</label>
+          <label data-tip="generatedWith"><input type="checkbox" id="generatedWith" checked> generated_with にこのツールを記録</label>
+        </div>
+      </section>
+
+      <section id="settingsSection" hidden>
+        <h2 data-tip="settings">settings(v3 / 実験的)</h2>
+        <div id="settings"></div>
+        <button type="button" data-add-setting="label">+ label</button>
+        <button type="button" data-add-setting="toggle">+ toggle</button>
+        <button type="button" data-add-setting="slider">+ slider</button>
+        <button type="button" data-add-setting="dropdown">+ dropdown</button>
+        <button type="button" data-add-setting="multiselect">+ multiselect</button>
+      </section>
+    </form>
+
+    <div class="col">
+      <div class="panel">
+        <h2 data-tip="gamePreview">ゲーム内プレビュー</h2>
+        <div id="gameScreens"></div>
+        <p class="hint">※ イメージです。実際のゲーム画面とは細部が異なる場合があります。</p>
+      </div>
+
+      <div class="panel">
+        <div class="out-head">
+          <h2>manifest.json</h2>
+          <div>
+            <button type="button" id="copy">コピー</button>
+            <button type="button" id="download" class="primary">ダウンロード</button>
+          </div>
+        </div>
+        <ul id="warnings"></ul>
+        <pre id="output"></pre>
+        <p id="status" role="status"></p>
+      </div>
+    </div>
+  </main>
+
+  <div id="tooltip" role="tooltip" hidden></div>
+
+  <script src="tips.js"></script>
+  <script src="formatting.js"></script>
+  <script src="gamepreview.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
