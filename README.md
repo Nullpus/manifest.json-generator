@@ -1,0 +1,2 @@
+# manifest.json-generator
+マイクラ統合版で動くmanifest.jsonをWeb上でサクッと作成して保存できるWebツール
